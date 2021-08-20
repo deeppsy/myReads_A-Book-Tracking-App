@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import { Route, Link } from "react-router-dom";
-// import * as BooksAPI from './BooksAPI'
+import * as BooksAPI from "./BooksAPI";
 import "./App.css";
-import getAll from "./utils/data";
 
 class BooksApp extends React.Component {
   bookshelves = [
@@ -12,8 +11,9 @@ class BooksApp extends React.Component {
   ];
 
   state = {
-    books: getAll,
+    books: [],
   };
+
   moveBook = (book, shelf) => {
     const updatedBooks = this.state.books.map((b) => {
       if (b.id === book.id) {
@@ -24,6 +24,14 @@ class BooksApp extends React.Component {
     this.setState({
       books: updatedBooks,
     });
+  };
+
+  componentDidMount = () => {
+    BooksAPI.getAll()
+      .then((books) => {
+        this.setState({ books });
+      })
+      .catch((e) => console.log(e));
   };
 
   render() {
