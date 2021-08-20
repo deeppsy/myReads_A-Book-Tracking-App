@@ -15,6 +15,10 @@ class BooksApp extends React.Component {
   };
 
   moveBook = (book, shelf) => {
+    BooksAPI.update(book, shelf)
+      .then((books) => console.log(books))
+      .catch((e) => console.log(e));
+
     const updatedBooks = this.state.books.map((b) => {
       if (b.id === book.id) {
         b.shelf = shelf;
