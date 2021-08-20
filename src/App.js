@@ -12,6 +12,7 @@ class BooksApp extends React.Component {
 
   state = {
     books: [],
+    searchBooks: [],
   };
 
   moveBook = (book, shelf) => {
@@ -28,6 +29,26 @@ class BooksApp extends React.Component {
     this.setState({
       books: updatedBooks,
     });
+  };
+
+  searchForBooks = (query) => {
+    if (query.length > 0) {
+      BooksAPI.search(query)
+        .then((books) => {
+          if (books.error) {
+            this.setState({ searchBooks: [] });
+          } else {
+            this.setState({ searchBooks: books });
+          }
+        })
+        .catch((e) => console.log(e));
+    } else {
+      this.setState({ searchBooks: [] });
+    }
+  };
+
+  resetSearch = () => {
+    this.setState({ searchBooks: [] });
   };
 
   componentDidMount = () => {
