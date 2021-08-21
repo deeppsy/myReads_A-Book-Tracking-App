@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import { Route, Link } from "react-router-dom";
+import { debounce } from "throttle-debounce";
+
 import * as BooksAPI from "./BooksAPI";
+
 import "./App.css";
 
 class BooksApp extends React.Component {
@@ -31,7 +34,7 @@ class BooksApp extends React.Component {
     });
   };
 
-  searchForBooks = (query) => {
+  searchForBooks = debounce(300, false, (query) => {
     if (query.length > 0) {
       BooksAPI.search(query)
         .then((books) => {
@@ -45,7 +48,7 @@ class BooksApp extends React.Component {
     } else {
       this.setState({ searchBooks: [] });
     }
-  };
+  });
 
   resetSearch = () => {
     this.setState({ searchBooks: [] });
@@ -60,7 +63,7 @@ class BooksApp extends React.Component {
   };
 
   render() {
-    const { books } = this.state;
+    const { books, searchBooks } = this.state;
     return (
       <div className="app">
         <Route
@@ -74,7 +77,17 @@ class BooksApp extends React.Component {
             />
           )}
         />
-        <Route path="/search" render={() => <BookSearch books={books} />} />
+        <Route
+          path="/search"
+          render={() => (
+            <BookSearch
+              books={searchBooks}
+              onMove={this.moveBook} //remove
+              onSearch={this.searchForBooks}
+              onResetSearch={this.resetSearch}
+            />
+          )}
+        />
       </div>
     );
   }
@@ -150,13 +163,21 @@ class Book extends Component {
               style={{
                 width: 128,
                 height: 193,
-                backgroundImage: `url(${book.imageLinks.thumbnail})`,
+                backgroundImage: `url(${
+                  book.imageLinks ? book.imageLinks.thumbnail : ""
+                })`,
               }}
             />
             <BookShelfChanger book={book} shelf={shelf} onMove={onMove} />
           </div>
           <div className="book-title">{book.title}</div>
-          <div className="book-authors">{book.authors.join(", ")}</div>
+          <div className="book-authors">
+            {book.authors
+              ? book.authors.length > 1
+                ? book.authors.join(", ")
+                : book.authors[0]
+              : "No Author"}
+          </div>
         </div>
       </li>
     );
@@ -207,10 +228,10 @@ class OpenSearchButton extends Component {
 
 class BookSearch extends Component {
   render() {
-    const { books } = this.props;
+    const { books, onSearch, onResetSearch } = this.props;
     return (
       <div className="search-books">
-        <SearchBar />
+        <SearchBar onSearch={onSearch} onResetSearch={onResetSearch} />
         <SearchResults books={books} />
       </div>
     );
@@ -219,28 +240,47 @@ class BookSearch extends Component {
 
 class SearchBar extends Component {
   render() {
+    const { onSearch, onResetSearch } = this.props;
     return (
       <div className="search-books-bar">
-        <CloseSearchButton />
-        <SearchBooksInput />
+        <CloseSearchButton onResetSearch={onResetSearch} />
+        <SearchBooksInput onSearch={onSearch} />
       </div>
     );
   }
 }
 class CloseSearchButton extends Component {
   render() {
+    const { onResetSearch } = this.props;
     return (
       <Link to="/">
-        <button className="close-search">Close</button>
+        <button className="close-search" onClick={onResetSearch}>
+          Close
+        </button>
       </Link>
     );
   }
 }
 class SearchBooksInput extends Component {
+  state = {
+    value: "",
+  };
+
+  handleChange = (e) => {
+    const val = e.target.value;
+    this.setState({ value: val }, () => {
+      this.props.onSearch(val);
+    });
+  };
   render() {
     return (
       <div className="search-books-input-wrapper">
-        <input type="text" placeholder="Search by title or author" />
+        <input
+          type="text"
+          placeholder="Search by title or author"
+          value={this.state.value}
+          onChange={this.handleChange}
+        />
       </div>
     );
   }
