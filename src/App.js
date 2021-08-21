@@ -9,13 +9,13 @@ import "./App.css";
 import ListBooks from "./components/ListBooks";
 import BookSearch from "./components/BookSearch";
 
-class BooksApp extends Component {
-  bookshelves = [
-    { key: "currentlyReading", name: "Currently Reading" },
-    { key: "wantToRead", name: "Want To Read" },
-    { key: "read", name: "Read" },
-  ];
+const bookshelves = [
+  { key: "currentlyReading", name: "Currently Reading" },
+  { key: "wantToRead", name: "Want To Read" },
+  { key: "read", name: "Read" },
+];
 
+class BooksApp extends Component {
   state = {
     myBooks: [],
     searchBooks: [],
@@ -77,7 +77,7 @@ class BooksApp extends Component {
           path="/"
           render={() => (
             <ListBooks
-              bookshelves={this.bookshelves}
+              bookshelves={bookshelves}
               books={myBooks}
               onMove={this.moveBook}
             />
