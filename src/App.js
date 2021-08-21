@@ -18,22 +18,23 @@ class BooksApp extends Component {
     searchBooks: [],
   };
 
-  moveBook = (book, shelf) => {
-    BooksAPI.update(book, shelf)
-      .then((books) => console.log(books))
-      .catch((e) => console.log(e));
+  moveBook = async (book, shelf) => {
+    try {
+      await BooksAPI.update(book, shelf);
+      let updatedBooks = [];
+      updatedBooks = this.state.myBooks.filter((b) => b.id !== book.id);
 
-    let updatedBooks = [];
-    updatedBooks = this.state.myBooks.filter((b) => b.id !== book.id);
+      if (shelf !== "none") {
+        book.shelf = shelf;
+        updatedBooks = updatedBooks.concat(book);
+      }
 
-    if (shelf !== "none") {
-      book.shelf = shelf;
-      updatedBooks = updatedBooks.concat(book);
+      this.setState({
+        myBooks: updatedBooks,
+      });
+    } catch (e) {
+      console.log(e);
     }
-
-    this.setState({
-      myBooks: updatedBooks,
-    });
   };
 
   searchForBooks = debounce(300, false, (query) => {
