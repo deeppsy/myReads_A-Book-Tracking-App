@@ -1,10 +1,13 @@
 import React, { Component } from "react";
-import { Route, Link } from "react-router-dom";
+import { Route } from "react-router-dom";
 import { debounce } from "throttle-debounce";
 
 import * as BooksAPI from "./BooksAPI";
 
 import "./App.css";
+
+import ListBooks from "./components/ListBooks";
+import BookSearch from "./components/BookSearch";
 
 class BooksApp extends Component {
   bookshelves = [
@@ -86,244 +89,12 @@ class BooksApp extends Component {
             <BookSearch
               searchBooks={searchBooks}
               myBooks={myBooks}
-              onMove={this.moveBook} //remove
+              onMove={this.moveBook}
               onSearch={this.searchForBooks}
               onResetSearch={this.resetSearch}
             />
           )}
         />
-      </div>
-    );
-  }
-}
-
-class ListBooks extends Component {
-  render() {
-    const { bookshelves, books, onMove } = this.props;
-    return (
-      <div className="list-books">
-        <div className="list-books-title">
-          <h1>MyReads</h1>
-        </div>
-        <BookCase bookshelves={bookshelves} books={books} onMove={onMove} />
-        <OpenSearchButton />
-      </div>
-    );
-  }
-}
-
-class BookCase extends Component {
-  render() {
-    const { bookshelves, books, onMove } = this.props;
-    return (
-      <div className="list-books-content">
-        <div>
-          {bookshelves.map((shelf) => (
-            <BookShelf
-              key={shelf.key}
-              shelf={shelf}
-              books={books}
-              onMove={onMove}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-}
-
-class BookShelf extends Component {
-  render() {
-    const { shelf, books, onMove } = this.props;
-    const booksOnThisShelf = books.filter((book) => book.shelf === shelf.key);
-    return (
-      <div className="bookshelf">
-        <h2 className="bookshelf-title">{shelf.name}</h2>
-        <div className="bookshelf-books">
-          <ol className="books-grid">
-            {booksOnThisShelf.map((book) => (
-              <Book
-                book={book}
-                shelf={shelf.key}
-                key={book.id}
-                onMove={onMove}
-              />
-            ))}
-          </ol>
-        </div>
-      </div>
-    );
-  }
-}
-class Book extends Component {
-  render() {
-    const { book, shelf, onMove } = this.props;
-    return (
-      <li>
-        <div className="book">
-          <div className="book-top">
-            <div
-              className="book-cover"
-              style={{
-                width: 128,
-                height: 193,
-                backgroundImage: `url(${
-                  book.imageLinks ? book.imageLinks.thumbnail : ""
-                })`,
-              }}
-            />
-            <BookShelfChanger book={book} shelf={shelf} onMove={onMove} />
-          </div>
-          <div className="book-title">{book.title}</div>
-          <div className="book-authors">
-            {book.authors
-              ? book.authors.length > 1
-                ? book.authors.join(", ")
-                : book.authors[0]
-              : "No Author"}
-          </div>
-        </div>
-      </li>
-    );
-  }
-}
-class BookShelfChanger extends Component {
-  state = {
-    value: this.props.shelf,
-  };
-
-  handleChange = (e) => {
-    this.setState({ value: e.target.value });
-    this.props.onMove(this.props.book, e.target.value);
-  };
-
-  render() {
-    return (
-      <div className="book-shelf-changer">
-        <select value={this.state.value} onChange={this.handleChange}>
-          <option value="move" disabled>
-            Move to...
-          </option>
-          <option value="currentlyReading">Currently Reading</option>
-          <option value="wantToRead">Want to Read</option>
-          <option value="read">Read</option>
-          <option value="none">None</option>
-        </select>
-      </div>
-    );
-  }
-}
-
-class OpenSearchButton extends Component {
-  render() {
-    return (
-      <div className="open-search">
-        <Link to="/search">
-          <button>Add a book</button>
-        </Link>
-      </div>
-    );
-  }
-}
-
-// *********************************************
-// This is the Search Page
-// *********************************************
-
-class BookSearch extends Component {
-  render() {
-    const {
-      myBooks,
-      searchBooks,
-      onSearch,
-      onResetSearch,
-      onMove,
-    } = this.props;
-    return (
-      <div className="search-books">
-        <SearchBar onSearch={onSearch} onResetSearch={onResetSearch} />
-        <SearchResults
-          myBooks={myBooks}
-          onMove={onMove}
-          searchBooks={searchBooks}
-        />
-      </div>
-    );
-  }
-}
-
-class SearchBar extends Component {
-  render() {
-    const { onSearch, onResetSearch } = this.props;
-    return (
-      <div className="search-books-bar">
-        <CloseSearchButton onResetSearch={onResetSearch} />
-        <SearchBooksInput onSearch={onSearch} />
-      </div>
-    );
-  }
-}
-class CloseSearchButton extends Component {
-  render() {
-    const { onResetSearch } = this.props;
-    return (
-      <Link to="/">
-        <button className="close-search" onClick={onResetSearch}>
-          Close
-        </button>
-      </Link>
-    );
-  }
-}
-class SearchBooksInput extends Component {
-  state = {
-    value: "",
-  };
-
-  handleChange = (e) => {
-    const val = e.target.value;
-    this.setState({ value: val }, () => {
-      this.props.onSearch(val);
-    });
-  };
-  render() {
-    return (
-      <div className="search-books-input-wrapper">
-        <input
-          type="text"
-          placeholder="Search by title or author"
-          value={this.state.value}
-          onChange={this.handleChange}
-        />
-      </div>
-    );
-  }
-}
-
-class SearchResults extends Component {
-  render() {
-    const { myBooks, searchBooks, onMove } = this.props;
-    const updatedBooks = searchBooks.map((book) => {
-      myBooks.map((b) => {
-        if (b.id === book.id) {
-          book.shelf = b.shelf;
-        }
-        return b;
-      });
-      return book;
-    });
-    return (
-      <div className="search-books-results">
-        <ol className="books-grid">
-          {updatedBooks.map((book) => (
-            <Book
-              key={book.id}
-              book={book}
-              shelf={book.shelf ? book.shelf : "none"}
-              onMove={onMove}
-            />
-          ))}
-        </ol>
       </div>
     );
   }
