@@ -6,7 +6,7 @@ import * as BooksAPI from "./BooksAPI";
 
 import "./App.css";
 
-class BooksApp extends React.Component {
+class BooksApp extends Component {
   bookshelves = [
     { key: "currentlyReading", name: "Currently Reading" },
     { key: "wantToRead", name: "Want To Read" },
@@ -14,7 +14,7 @@ class BooksApp extends React.Component {
   ];
 
   state = {
-    books: [],
+    myBooks: [],
     searchBooks: [],
   };
 
@@ -23,14 +23,16 @@ class BooksApp extends React.Component {
       .then((books) => console.log(books))
       .catch((e) => console.log(e));
 
-    const updatedBooks = this.state.books.map((b) => {
-      if (b.id === book.id) {
-        b.shelf = shelf;
-      }
-      return b;
-    });
+    let updatedBooks = [];
+    updatedBooks = this.state.myBooks.filter((b) => b.id !== book.id);
+
+    if (shelf !== "none") {
+      book.shelf = shelf;
+      updatedBooks = updatedBooks.concat(book);
+    }
+
     this.setState({
-      books: updatedBooks,
+      myBooks: updatedBooks,
     });
   };
 
@@ -57,13 +59,13 @@ class BooksApp extends React.Component {
   componentDidMount = () => {
     BooksAPI.getAll()
       .then((books) => {
-        this.setState({ books });
+        this.setState({ myBooks: books });
       })
       .catch((e) => console.log(e));
   };
 
   render() {
-    const { books, searchBooks } = this.state;
+    const { myBooks, searchBooks } = this.state;
     return (
       <div className="app">
         <Route
@@ -72,7 +74,7 @@ class BooksApp extends React.Component {
           render={() => (
             <ListBooks
               bookshelves={this.bookshelves}
-              books={books}
+              books={myBooks}
               onMove={this.moveBook}
             />
           )}
@@ -81,7 +83,8 @@ class BooksApp extends React.Component {
           path="/search"
           render={() => (
             <BookSearch
-              books={searchBooks}
+              searchBooks={searchBooks}
+              myBooks={myBooks}
               onMove={this.moveBook} //remove
               onSearch={this.searchForBooks}
               onResetSearch={this.resetSearch}
@@ -228,11 +231,21 @@ class OpenSearchButton extends Component {
 
 class BookSearch extends Component {
   render() {
-    const { books, onSearch, onResetSearch } = this.props;
+    const {
+      myBooks,
+      searchBooks,
+      onSearch,
+      onResetSearch,
+      onMove,
+    } = this.props;
     return (
       <div className="search-books">
         <SearchBar onSearch={onSearch} onResetSearch={onResetSearch} />
-        <SearchResults books={books} />
+        <SearchResults
+          myBooks={myBooks}
+          onMove={onMove}
+          searchBooks={searchBooks}
+        />
       </div>
     );
   }
@@ -288,12 +301,26 @@ class SearchBooksInput extends Component {
 
 class SearchResults extends Component {
   render() {
-    const { books } = this.props;
+    const { myBooks, searchBooks, onMove } = this.props;
+    const updatedBooks = searchBooks.map((book) => {
+      myBooks.map((b) => {
+        if (b.id === book.id) {
+          book.shelf = b.shelf;
+        }
+        return b;
+      });
+      return book;
+    });
     return (
       <div className="search-books-results">
         <ol className="books-grid">
-          {books.map((book) => (
-            <Book key={book.id} book={book} shelf="none" />
+          {updatedBooks.map((book) => (
+            <Book
+              key={book.id}
+              book={book}
+              shelf={book.shelf ? book.shelf : "none"}
+              onMove={onMove}
+            />
           ))}
         </ol>
       </div>
